@@ -1,3 +1,5 @@
+#![deny(clippy::pedantic)]
+
 #[cfg(test)]
 mod tests {
     #[test]
