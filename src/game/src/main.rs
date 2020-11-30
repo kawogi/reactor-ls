@@ -9,7 +9,7 @@ use glium::{Surface, vertex::VertexBufferAny, glutin::dpi::{PhysicalSize, Size},
 use glium::index::{ NoIndices, PrimitiveType };
 use glium::glutin::event::{ Event, WindowEvent, StartCause };
 use glium::glutin::event_loop::{ EventLoop, ControlFlow };
-use model::{load_stl};
+use model::load_stl;
 
 mod display;
 mod model;
@@ -20,7 +20,8 @@ pub type GliumMatrix = [[f32; 4]; 4];
 #[repr(i32)]
 pub enum ExitCode {
     //Ok = 0,
-    CreateDisplay = 1,
+    LoadMesh = 1,
+    CreateDisplay = 2,
 }
 
 impl From<ExitCode> for i32 {
@@ -34,14 +35,13 @@ pub enum Action {
     Continue,
 }
 
-
 fn main() {
 
     println!("loading mesh");
     let vertex_data = load_stl(&mut Cursor::new(include_bytes!("../../../res/axis.stl")))
             .unwrap_or_else(|err| {
                 eprintln!("Could not parse stl: {}", err);
-                process::exit(ExitCode::CreateDisplay as i32)
+                process::exit(ExitCode::LoadMesh as i32)
             });
 
 
