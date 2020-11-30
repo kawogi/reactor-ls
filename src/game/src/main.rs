@@ -1,6 +1,7 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 
+use cgmath::Vector3;
 use std::io::Cursor;
 use std::process;
 use std::time::{Duration, Instant};
@@ -80,8 +81,9 @@ fn main() {
     });
 
     let binding = Bindings::default();
-
-    let mut camera = camera::CameraState::new(aspect_ratio, binding);
+    let cam_position = Vector3::new(1.0, 1.0, 1.0);
+    let cam_look_at = Vector3::new(0.0, 0.0, 0.0);
+    let mut camera = camera::CameraState::new(cam_position, cam_look_at, aspect_ratio, binding);
 
     debug!("start main loop …");
     start_loop(event_loop, move |events| {
