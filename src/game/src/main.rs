@@ -42,7 +42,7 @@ fn main() {
     debug!("loading mesh");
     let vertex_data = load_stl(&mut Cursor::new(include_bytes!("../../../res/axis.stl")))
             .unwrap_or_else(|err| {
-                eprintln!("Could not parse stl: {}", err);
+                error!("Could not parse stl: {}", err);
                 process::exit(ExitCode::LoadMesh as i32)
             });
 
