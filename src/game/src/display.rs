@@ -1,5 +1,6 @@
 use glium::glutin::{ContextBuilder, GlProfile, GlRequest, Robustness, event_loop::EventLoop, dpi::Size, window::WindowBuilder};
 use glium::backend::glutin::DisplayCreationError;
+use log::debug;
 
 use std::string::ToString;
 
@@ -76,24 +77,24 @@ pub fn create<T>(event_loop: &EventLoop<T>, size: Size) -> Result<glium::Display
 
 pub fn dump_details(display: &glium::Display) {
     let (max_viewport_width, max_viewport_height) = display.get_max_viewport_dimensions();
-    println!("max viewport dimensions: {} × {}", max_viewport_width, max_viewport_height);
+    debug!("max viewport dimensions: {} × {}", max_viewport_width, max_viewport_height);
     let (framebuffer_width, framebuffer_height) = display.get_framebuffer_dimensions();
-    println!("framebuffer dimensions : {} × {}", framebuffer_width, framebuffer_height);
+    debug!("framebuffer dimensions : {} × {}", framebuffer_width, framebuffer_height);
     let free_memory_str = display.get_free_video_memory().map_or_else(|| "(unknown)".to_string(), |memory| memory.to_string());
-    println!("free video memory      : {}", free_memory_str);
+    debug!("free video memory      : {}", free_memory_str);
     let max_anisotropy_str = display.get_max_anisotropy_support().map_or_else(|| "(unknown)".to_string(), |anisotropy| anisotropy.to_string());
-    println!("max anisotropy support : {}", max_anisotropy_str);
+    debug!("max anisotropy support : {}", max_anisotropy_str);
     let opengl_profile_str = display.get_opengl_profile().map_or_else(|| "(unknown)".to_string(), |profile| format!("{:?}", profile));
-    println!("opengl profile         : {}", opengl_profile_str);
-    println!("opengl renderer string : {}", display.get_opengl_renderer_string());
-    println!("opengl vendor string   : {}", display.get_opengl_vendor_string());
-    println!("opengl version         : {:?}", display.get_opengl_version());
-    println!("opengl version string  : {}", display.get_opengl_version_string());
-    println!("release behavior       : {:?}", display.get_release_behavior());
-    println!("supported glsl version : {:?}", display.get_supported_glsl_version());
-    println!("context loss possible  : {}", if display.is_context_loss_possible() { "yes" } else { "no" });
-    println!("debug                  : {}", if display.is_debug() { "yes" } else { "no" });
-    println!("forward compatible     : {}", if display.is_forward_compatible() { "yes" } else { "no" });
-    println!("robust                 : {}", if display.is_robust() { "yes" } else { "no" });
+    debug!("opengl profile         : {}", opengl_profile_str);
+    debug!("opengl renderer string : {}", display.get_opengl_renderer_string());
+    debug!("opengl vendor string   : {}", display.get_opengl_vendor_string());
+    debug!("opengl version         : {:?}", display.get_opengl_version());
+    debug!("opengl version string  : {}", display.get_opengl_version_string());
+    debug!("release behavior       : {:?}", display.get_release_behavior());
+    debug!("supported glsl version : {:?}", display.get_supported_glsl_version());
+    debug!("context loss possible  : {}", if display.is_context_loss_possible() { "yes" } else { "no" });
+    debug!("debug                  : {}", if display.is_debug() { "yes" } else { "no" });
+    debug!("forward compatible     : {}", if display.is_forward_compatible() { "yes" } else { "no" });
+    debug!("robust                 : {}", if display.is_robust() { "yes" } else { "no" });
 }
 

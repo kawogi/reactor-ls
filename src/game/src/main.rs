@@ -9,6 +9,7 @@ use glium::{Surface, vertex::VertexBufferAny, glutin::dpi::{PhysicalSize, Size},
 use glium::index::{ NoIndices, PrimitiveType };
 use glium::glutin::event::{ Event, WindowEvent, StartCause };
 use glium::glutin::event_loop::{ EventLoop, ControlFlow };
+use log::{debug, error};
 use model::load_stl;
 
 mod display;
@@ -36,8 +37,9 @@ pub enum Action {
 }
 
 fn main() {
+    pretty_env_logger::init();
 
-    println!("loading mesh");
+    debug!("loading mesh");
     let vertex_data = load_stl(&mut Cursor::new(include_bytes!("../../../res/axis.stl")))
             .unwrap_or_else(|err| {
                 eprintln!("Could not parse stl: {}", err);
@@ -45,7 +47,7 @@ fn main() {
             });
 
 
-    println!("creating display");
+    debug!("creating display");
     let event_loop = EventLoop::new();
     let window_width = 1024;
     let window_height = 768;
@@ -55,14 +57,14 @@ fn main() {
     let display = display::create(&event_loop, Size::Physical(PhysicalSize::new(window_width, window_height)))
             .unwrap_or_else(|err| {
                 // TODO maybe differentiate between error types
-                eprintln!("Could not create display: {}", err);
+                error!("Could not create display: {}", err);
                 process::exit(ExitCode::CreateDisplay as i32)
             });
 
     display::dump_details(&display);
 
     // building the vertex and index buffers
-    println!("create vertex buffer from mesh");
+    debug!("create vertex buffer from mesh");
     let vertex_buffer: VertexBufferAny = glium::vertex::VertexBuffer::new(&display, &vertex_data).unwrap().into();
 
     // the program
@@ -105,7 +107,7 @@ fn main() {
 
     let mut camera = camera::CameraState::new(aspect_ratio);
 
-    println!("start main loop …");
+    debug!("start main loop …");
     start_loop(event_loop, move |events| {
         camera.update_position();
 

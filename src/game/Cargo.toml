@@ -13,3 +13,5 @@ glium = "0.28.0"
 obj = { version = "0.10", features = ["genmesh"] }
 stl_io = "0.5.2"
 cgmath = "0.17.0"
+log = "0.4.11"
+pretty_env_logger = "0.4.0"
