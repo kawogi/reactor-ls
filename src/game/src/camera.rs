@@ -1,9 +1,11 @@
+use crate::input::bindings::Bindings;
 use cgmath::{Matrix, Matrix3};
 use cgmath::{Deg, InnerSpace, Matrix4, PerspectiveFov, Vector3, Vector4};
 use glium::glutin;
 
 #[allow(clippy::module_name_repetitions, clippy::clippy::struct_excessive_bools)]
 pub struct CameraState {
+    bindings: Bindings,
     aspect_ratio: f32,
     position: Vector3<f32>,
     direction: Vector3<f32>,
@@ -17,8 +19,9 @@ pub struct CameraState {
 }
 
 impl CameraState {
-    pub fn new(aspect_ratio: f32) -> CameraState {
+    pub fn new(aspect_ratio: f32, bindings: Bindings) -> CameraState {
         CameraState {
+            bindings,
             aspect_ratio,
             position: Vector3::new(1.0, 1.0, 1.0),
             direction: Vector3::new(-1.0, -1.0, -1.0),
@@ -87,18 +90,23 @@ impl CameraState {
             _ => return,
         };
         let pressed = input.state == glutin::event::ElementState::Pressed;
-        let key = match input.virtual_keycode {
-            Some(key) => key,
-            None => return,
-        };
-        match key {
-            glutin::event::VirtualKeyCode::Up => self.moving_up = pressed,
-            glutin::event::VirtualKeyCode::Down => self.moving_down = pressed,
-            glutin::event::VirtualKeyCode::A => self.moving_left = pressed,
-            glutin::event::VirtualKeyCode::D => self.moving_right = pressed,
-            glutin::event::VirtualKeyCode::W => self.moving_forward = pressed,
-            glutin::event::VirtualKeyCode::S => self.moving_backward = pressed,
-            _ => (),
-        };
+        if let Some(key) = input.virtual_keycode {
+            if let Some(action) = self.bindings.map(key) {
+                match action {
+                    crate::input::Action::Accelerate => self.moving_forward = pressed,
+                    crate::input::Action::Decelerate => self.moving_backward = pressed,
+                    crate::input::Action::StrafeLeft => self.moving_left = pressed,
+                    crate::input::Action::StrafeRight => self.moving_right = pressed,
+                    crate::input::Action::Ascend => self.moving_up = pressed,
+                    crate::input::Action::Descend => self.moving_down = pressed,
+                    crate::input::Action::YawLeft => {}
+                    crate::input::Action::YawRight => {}
+                    crate::input::Action::PitchUp => {}
+                    crate::input::Action::PitchDown => {}
+                    crate::input::Action::RollLeft => {}
+                    crate::input::Action::RollRight => {}
+                }
+            }
+        }
     }
 }

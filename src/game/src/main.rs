@@ -9,12 +9,14 @@ use glium::{Surface, vertex::VertexBufferAny, glutin::dpi::{PhysicalSize, Size},
 use glium::index::{ NoIndices, PrimitiveType };
 use glium::glutin::event::{ Event, WindowEvent, StartCause };
 use glium::glutin::event_loop::{ EventLoop, ControlFlow };
+use input::bindings::Bindings;
 use log::{debug, error};
 use model::load_stl;
 
 mod display;
 mod model;
 mod camera;
+mod input;
 
 pub type GliumMatrix = [[f32; 4]; 4];
 
@@ -77,7 +79,9 @@ fn main() {
         process::exit(ExitCode::CreateShaderProgram as i32)
     });
 
-    let mut camera = camera::CameraState::new(aspect_ratio);
+    let binding = Bindings::default();
+
+    let mut camera = camera::CameraState::new(aspect_ratio, binding);
 
     debug!("start main loop …");
     start_loop(event_loop, move |events| {
