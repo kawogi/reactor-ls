@@ -23,6 +23,7 @@ pub enum ExitCode {
     //Ok = 0,
     LoadMesh = 1,
     CreateDisplay = 2,
+    CreateShaderProgram = 3,
 }
 
 impl From<ExitCode> for i32 {
@@ -39,7 +40,7 @@ pub enum Action {
 fn main() {
     pretty_env_logger::init();
 
-    debug!("loading mesh");
+    debug!("load mesh");
     let vertex_data = load_stl(&mut Cursor::new(include_bytes!("../../../res/axis.stl")))
             .unwrap_or_else(|err| {
                 error!("Could not parse stl: {}", err);
@@ -47,7 +48,7 @@ fn main() {
             });
 
 
-    debug!("creating display");
+    debug!("create display");
     let event_loop = EventLoop::new();
     let window_width = 1024;
     let window_height = 768;
@@ -56,53 +57,25 @@ fn main() {
 
     let display = display::create(&event_loop, Size::Physical(PhysicalSize::new(window_width, window_height)))
             .unwrap_or_else(|err| {
-                // TODO maybe differentiate between error types
                 error!("Could not create display: {}", err);
                 process::exit(ExitCode::CreateDisplay as i32)
             });
 
     display::dump_details(&display);
 
-    // building the vertex and index buffers
     debug!("create vertex buffer from mesh");
     let vertex_buffer: VertexBufferAny = glium::vertex::VertexBuffer::new(&display, &vertex_data).unwrap().into();
 
-    let vertex_shader_str = "
-    #version 140
-
-    uniform mat4 persp_matrix;
-    uniform mat4 view_matrix;
-
-    in vec3 position;
-    in vec3 normal;
-    out vec3 v_position;
-    out vec3 v_normal;
-
-    void main() {
-        v_position = position;
-        v_normal = normal;
-        gl_Position = persp_matrix * view_matrix * vec4(v_position * 1.00, 1.0);
-    }
-    ";
-
-    let fragment_shader_stl = "
-    #version 140
-
-    in vec3 v_normal;
-    out vec4 f_color;
-
-    const vec3 LIGHT = vec3(-0.2, 0.8, 0.1);
-
-    void main() {
-        float lum = max(dot(normalize(v_normal), normalize(LIGHT)), 0.0);
-        vec3 color = (0.1 + 0.9 * lum * lum * lum) * vec3(1.0, 1.0, 1.0);
-        f_color = vec4(color, 1.0);
-    }
-    ";
-
+    debug!("create shader program");
     let program = program!(&display,
-        140 => { vertex: vertex_shader_str, fragment: fragment_shader_stl, },
-    ).unwrap();
+        140 => {
+            vertex: include_str!("../../../res/demo.vertex.140.glsl"),
+            fragment: include_str!("../../../res/demo.fragment.140.glsl"),
+        },
+    ).unwrap_or_else(|err| {
+        error!("Could not create shader program: {}", err);
+        process::exit(ExitCode::CreateShaderProgram as i32)
+    });
 
     let mut camera = camera::CameraState::new(aspect_ratio);
 
