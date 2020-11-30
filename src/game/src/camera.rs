@@ -63,14 +63,6 @@ impl CameraState {
         self.aspect_ratio = ratio;
     }
 
-    // pub fn set_position(&mut self, pos: (f32, f32, f32)) {
-    //     self.position = pos;
-    // }
-
-    // pub fn set_direction(&mut self, dir: (f32, f32, f32)) {
-    //     self.direction = dir;
-    // }
-
     pub fn get_perspective(&self) -> Matrix4<f32> {
         PerspectiveFov {
             fovy: Deg(90.0).into(),
@@ -81,12 +73,26 @@ impl CameraState {
     }
 
     pub fn get_view(&self) -> Matrix4<f32> {
-        let axis = self.matrix;
-
-        let mut result = Matrix4::from(axis.transpose());
+        let mut result = Matrix4::from(self.matrix.transpose());
         // position of the world's origin in the camera's coordinate space
-        result.w = Vector4::new(-self.position.dot(axis.x), -self.position.dot(axis.y), -self.position.dot(axis.z), 1.0);
+        result.w = Vector4::new(-self.position.dot(self.matrix.x), -self.position.dot(self.matrix.y), -self.position.dot(self.matrix.z), 1.0);
         result
+    }
+
+    pub fn move_by(&mut self, movement: Vector3<f32>) {
+        self.position += self.matrix * movement;
+    }
+    
+    pub fn yaw(&mut self, angle: Rad<f32>) {
+        self.matrix = Matrix3::from_axis_angle(self.matrix.y, angle) * self.matrix;
+    }
+    
+    pub fn pitch(&mut self, angle: Rad<f32>) {
+        self.matrix = Matrix3::from_axis_angle(self.matrix.x, angle) * self.matrix;
+    }
+    
+    pub fn roll(&mut self, angle: Rad<f32>) {
+        self.matrix = Matrix3::from_axis_angle(self.matrix.z, angle) * self.matrix;
     }
     
     #[allow(clippy::cast_precision_loss)]
@@ -103,17 +109,15 @@ impl CameraState {
         let pitch = if self.pitch_up { 1 } else { 0 } - if self.pitch_down { 1 } else { 0 };
         let roll = if self.roll_left { 1 } else { 0 } - if self.roll_right { 1 } else { 0 };
 
-        let yaw = Matrix3::from_axis_angle(self.matrix.y, Rad(yaw as f32 * rotate_speed));
-        let pitch = Matrix3::from_axis_angle(self.matrix.x, Rad(pitch as f32 * rotate_speed));
-        let roll = Matrix3::from_axis_angle(self.matrix.z, Rad(roll as f32 * rotate_speed));
-
         // describes the movement of the camera in it's own coordinate system
         let half_movement = Vector3::new(dx as f32, dy as f32, dz as f32) * move_speed * 0.5;
-        self.position += self.matrix * half_movement;
 
-        self.matrix = roll * pitch * yaw * self.matrix;
-
-        self.position += self.matrix * half_movement;
+        //perform a move/2→rotate→move/2 sequence which should be more precise than move→rotate or rotate→move
+        self.move_by(half_movement);
+        self.yaw(Rad(yaw as f32 * rotate_speed));
+        self.pitch(Rad(pitch as f32 * rotate_speed));
+        self.roll(Rad(roll as f32 * rotate_speed));
+        self.move_by(half_movement);
     }
 
     pub fn process_input(&mut self, event: &glutin::event::WindowEvent<'_>) {
