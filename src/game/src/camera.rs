@@ -118,6 +118,11 @@ impl CameraState {
         self.pitch(Rad(pitch as f32 * rotate_speed));
         self.roll(Rad(roll as f32 * rotate_speed));
         self.move_by(half_movement);
+
+        // repair unit vectors to compensate numeric instabilities after rotation
+        self.matrix.x = self.matrix.y.cross(self.matrix.z).normalize();
+        self.matrix.y = self.matrix.z.cross(self.matrix.x).normalize();
+        self.matrix.z = self.matrix.x.cross(self.matrix.y).normalize();
     }
 
     pub fn process_input(&mut self, event: &glutin::event::WindowEvent<'_>) {
