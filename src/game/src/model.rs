@@ -5,7 +5,7 @@ use glium::Display;
 use glium::implement_vertex;
 
 #[derive(Copy, Clone)]
-struct Vertex {
+pub struct Vertex {
     position: [f32; 3],
     normal: [f32; 3],
     texture: [f32; 2],
@@ -14,13 +14,13 @@ struct Vertex {
 implement_vertex!(Vertex, position, normal, texture);
 
 /// Returns a vertex buffer that should be rendered as `TrianglesList`.
-pub fn load_stl<R>(display: &Display, data: &mut R) -> io::Result<VertexBufferAny> 
+pub fn load_stl<R>(data: &mut R) -> io::Result<Vec<Vertex>>
 where
     R: io::Read + io::Seek
 {
     let mesh = stl_io::read_stl(data)?;
 
-    let vertex_data: Vec<Vertex> = mesh.faces.iter()
+    Ok(mesh.faces.iter()
         .flat_map(|triangle|
             triangle.vertices.iter()
             .map(|&vertex_index| mesh.vertices[vertex_index])
@@ -30,11 +30,9 @@ where
                 texture: [0.0, 0.0],
             })
         )
-        .collect();
-
-    // TODO catch error
-    Ok(glium::vertex::VertexBuffer::new(display, &vertex_data).unwrap().into())
+        .collect())
 }
+
 
 /// Returns a vertex buffer that should be rendered as `TrianglesList`.
 #[allow(dead_code)]

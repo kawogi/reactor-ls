@@ -1,15 +1,15 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 
-use crate::model::load_stl;
 use std::io::Cursor;
 use std::process;
 use std::time::{Duration, Instant};
 
-use glium::{Surface, glutin::dpi::{PhysicalSize, Size}, program, uniform};
+use glium::{Surface, vertex::VertexBufferAny, glutin::dpi::{PhysicalSize, Size}, program, uniform};
 use glium::index::{ NoIndices, PrimitiveType };
 use glium::glutin::event::{ Event, WindowEvent, StartCause };
 use glium::glutin::event_loop::{ EventLoop, ControlFlow };
+use model::{load_stl};
 
 mod display;
 mod model;
@@ -37,8 +37,16 @@ pub enum Action {
 
 fn main() {
 
-    let event_loop = EventLoop::new();
+    println!("loading mesh");
+    let vertex_data = load_stl(&mut Cursor::new(include_bytes!("../../../res/axis.stl")))
+            .unwrap_or_else(|err| {
+                eprintln!("Could not parse stl: {}", err);
+                process::exit(ExitCode::CreateDisplay as i32)
+            });
 
+
+    println!("creating display");
+    let event_loop = EventLoop::new();
     let window_width = 1024;
     let window_height = 768;
     #[allow(clippy::clippy::cast_precision_loss)]
@@ -54,11 +62,8 @@ fn main() {
     display::dump_details(&display);
 
     // building the vertex and index buffers
-    let vertex_buffer = load_stl(&display, &mut Cursor::new(include_bytes!("../../../res/axis.stl")))
-            .unwrap_or_else(|err| {
-                eprintln!("Could not parse stl: {}", err);
-                process::exit(ExitCode::CreateDisplay as i32)
-            });
+    println!("create vertex buffer from mesh");
+    let vertex_buffer: VertexBufferAny = glium::vertex::VertexBuffer::new(&display, &vertex_data).unwrap().into();
 
     // the program
     let program = program!(&display,
@@ -100,6 +105,7 @@ fn main() {
 
     let mut camera = camera::CameraState::new(aspect_ratio);
 
+    println!("start main loop …");
     start_loop(event_loop, move |events| {
         camera.update_position();
 
