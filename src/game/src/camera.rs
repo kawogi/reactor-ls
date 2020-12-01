@@ -1,35 +1,18 @@
+use crate::input::Control;
 use cgmath::Rad;
-use crate::input::bindings::Bindings;
 use cgmath::{Matrix, Matrix3};
 use cgmath::{Deg, InnerSpace, Matrix4, PerspectiveFov, Vector3, Vector4};
-use glium::glutin;
 
 #[allow(clippy::module_name_repetitions, clippy::clippy::struct_excessive_bools)]
 pub struct CameraState {
-    bindings: Bindings,
     aspect_ratio: f32,
     position: Vector3<f32>,
 
     matrix: Matrix3<f32>,
-
-    moving_up: bool,
-    moving_left: bool,
-    moving_down: bool,
-    moving_right: bool,
-    moving_forward: bool,
-    moving_backward: bool,
-
-    yaw_left: bool,
-    yaw_right: bool,
-    pitch_up: bool,
-    pitch_down: bool,
-    roll_left: bool,
-    roll_right: bool,
-
 }
 
 impl CameraState {
-    pub fn new(position: Vector3<f32>, look_at: Vector3<f32>, aspect_ratio: f32, bindings: Bindings) -> CameraState {
+    pub fn new(position: Vector3<f32>, look_at: Vector3<f32>, aspect_ratio: f32) -> CameraState {
 
         // depth vector of the camery pointing into the observer's eye
         let cam_z = (position - look_at).normalize();
@@ -39,23 +22,9 @@ impl CameraState {
         let cam_y = cam_z.cross(cam_x);
 
         CameraState {
-            bindings,
             aspect_ratio,
             position,
             matrix: Matrix3::from_cols(cam_x, cam_y, cam_z),
-            moving_up: false,
-            moving_left: false,
-            moving_down: false,
-            moving_right: false,
-            moving_forward: false,
-            moving_backward: false,
-
-            yaw_left: false,
-            yaw_right: false,
-            pitch_up: false,
-            pitch_down: false,
-            roll_left: false,
-            roll_right: false,
         }
     }
 
@@ -96,18 +65,18 @@ impl CameraState {
     }
     
     #[allow(clippy::cast_precision_loss)]
-    pub fn update_position(&mut self) {
+    pub fn update_position(&mut self, control: &Control) {
 
-        let move_speed = 0.02;
-        let rotate_speed = 0.02;
+        let move_speed = 0.1;
+        let rotate_speed = 0.1;
 
-        let dy = if self.moving_up { 1 } else { 0 } - if self.moving_down { 1 } else { 0 };
-        let dx = if self.moving_right { 1 } else { 0 } - if self.moving_left { 1 } else { 0 };
-        let dz = if self.moving_backward { 1 } else { 0 } - if self.moving_forward { 1 } else { 0 };
+        let dy = control.ascend.value;
+        let dx = control.strafe.value;
+        let dz = -control.thrust.value;
 
-        let yaw = if self.yaw_left { 1 } else { 0 } - if self.yaw_right { 1 } else { 0 };
-        let pitch = if self.pitch_up { 1 } else { 0 } - if self.pitch_down { 1 } else { 0 };
-        let roll = if self.roll_left { 1 } else { 0 } - if self.roll_right { 1 } else { 0 };
+        let yaw = control.yaw.value;
+        let pitch = control.pitch.value;
+        let roll = control.roll.value;
 
         // describes the movement of the camera in it's own coordinate system
         let half_movement = Vector3::new(dx as f32, dy as f32, dz as f32) * move_speed * 0.5;
@@ -125,29 +94,4 @@ impl CameraState {
         self.matrix.z = self.matrix.x.cross(self.matrix.y).normalize();
     }
 
-    pub fn process_input(&mut self, event: &glutin::event::WindowEvent<'_>) {
-        let input = match *event {
-            glutin::event::WindowEvent::KeyboardInput { input, .. } => input,
-            _ => return,
-        };
-        let pressed = input.state == glutin::event::ElementState::Pressed;
-        if let Some(key) = input.virtual_keycode {
-            if let Some(action) = self.bindings.map(key) {
-                match action {
-                    crate::input::Action::Accelerate => self.moving_forward = pressed,
-                    crate::input::Action::Decelerate => self.moving_backward = pressed,
-                    crate::input::Action::StrafeLeft => self.moving_left = pressed,
-                    crate::input::Action::StrafeRight => self.moving_right = pressed,
-                    crate::input::Action::Ascend => self.moving_up = pressed,
-                    crate::input::Action::Descend => self.moving_down = pressed,
-                    crate::input::Action::YawLeft => self.yaw_left = pressed,
-                    crate::input::Action::YawRight => self.yaw_right = pressed,
-                    crate::input::Action::PitchUp => self.pitch_up = pressed,
-                    crate::input::Action::PitchDown => self.pitch_down = pressed,
-                    crate::input::Action::RollLeft => self.roll_left = pressed,
-                    crate::input::Action::RollRight => self.roll_right = pressed,
-                }
-            }
-        }
-    }
 }

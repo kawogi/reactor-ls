@@ -1,6 +1,7 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 
+use crate::input::Control;
 use cgmath::Vector3;
 use std::io::Cursor;
 use std::process;
@@ -10,7 +11,7 @@ use glium::{Surface, vertex::VertexBufferAny, glutin::dpi::{PhysicalSize, Size},
 use glium::index::{ NoIndices, PrimitiveType };
 use glium::glutin::event::{ Event, WindowEvent, StartCause };
 use glium::glutin::event_loop::{ EventLoop, ControlFlow };
-use input::bindings::Bindings;
+use input::{bindings::Bindings, keyboard};
 use log::{debug, error};
 use model::load_stl;
 
@@ -80,14 +81,18 @@ fn main() {
         process::exit(ExitCode::CreateShaderProgram as i32)
     });
 
-    let binding = Bindings::default();
+    let mut control = Control::new(1.0);
+    let mut keyboard = keyboard::Control::default();
     let cam_position = Vector3::new(1.0, 1.0, 1.0);
     let cam_look_at = Vector3::new(0.0, 0.0, 0.0);
-    let mut camera = camera::CameraState::new(cam_position, cam_look_at, aspect_ratio, binding);
+    let mut camera = camera::CameraState::new(cam_position, cam_look_at, aspect_ratio);
 
     debug!("start main loop …");
     start_loop(event_loop, move |events| {
-        camera.update_position();
+        //camera.update_position();
+        // TODO insert proper duration
+        control.update(1.0 / 30.0);
+        camera.update_position(&control);
 
         // building the uniforms
         let persp_matrix: GliumMatrix = camera.get_perspective().into();
@@ -120,7 +125,10 @@ fn main() {
                     WindowEvent::CloseRequested => action = Action::Stop,
                     #[allow(clippy::clippy::cast_precision_loss)]
                     WindowEvent::Resized(size) => camera.set_aspect_ratio(size.width as f32 / size.height as f32),
-                    ev => camera.process_input(&ev),
+                    WindowEvent::KeyboardInput { device_id: _device_id, input, is_synthetic: _is_synthetic } => {
+                        keyboard.process_keyboard_input(*input, &mut control);
+                    },
+                    _ => {}
                 },
                 _ => (),
             }
